@@ -596,7 +596,7 @@ void main() {
     await tester.tap(find.text('add'));
     await tester.pumpAndSettle();
     // The key tab is the default; these tests exercise the email form.
-    await tester.tap(find.text('Email & Password'));
+    await tester.tap(find.text('ایمیل و رمز'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'nobody@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'pw');
@@ -649,7 +649,7 @@ void main() {
     await tester.tap(find.text('add'));
     await tester.pumpAndSettle();
     // The key tab is the default; these tests exercise the email form.
-    await tester.tap(find.text('Email & Password'));
+    await tester.tap(find.text('ایمیل و رمز'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'google@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'pw');
@@ -692,12 +692,12 @@ void main() {
 
     // The key tab is the default: one key field, no autofill group.
     final keyField = tester.widget<TextField>(
-      find.widgetWithText(TextField, 'FoxyVPN key'),
+      find.byType(TextField).first,
     );
     expect(keyField.autofillHints, isNull);
 
     await tester.enterText(
-      find.widgetWithText(TextField, 'FoxyVPN key'),
+      find.byType(TextField).first,
       'FV1.test-key',
     );
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
@@ -713,7 +713,7 @@ void main() {
     await tester.tap(find.text('add'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.widgetWithText(TextField, 'FoxyVPN key'),
+      find.byType(TextField).first,
       'FV1.old-key',
     );
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
