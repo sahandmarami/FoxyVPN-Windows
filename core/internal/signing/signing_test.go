@@ -23,7 +23,7 @@ func sign(priv ed25519.PrivateKey, data []byte) []byte {
 func TestASignatureByTheKeyIsAccepted(t *testing.T) {
 	pub, priv, _ := ed25519.GenerateKey(nil)
 	withKey(t, pub)
-	data := []byte("abc  Firefox-VPN-1.2.3-Windows-x64.zip\n")
+	data := []byte("abc  FoxyVPN-1.2.3-Windows-x64.zip\n")
 	if err := Verify(data, sign(priv, data)); err != nil {
 		t.Fatal(err)
 	}

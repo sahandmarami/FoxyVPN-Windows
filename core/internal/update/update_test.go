@@ -40,14 +40,14 @@ func newRelease(t *testing.T, v string) *release {
 	t.Cleanup(func() { signing.Key = old })
 	r := &release{version: v, priv: priv, files: map[string][]byte{
 		AssetName(v): appZip(t, map[string]string{
-			"Firefox VPN/firefox-vpn.exe":              "app " + v,
-			"Firefox VPN/flutter_windows.dll":          "flutter " + v,
-			"Firefox VPN/data/app.so":                  "assets " + v,
-			"Firefox VPN/core/firefox-vpn-core.exe":    "core " + v,
-			"Firefox VPN/core/firefox-vpn-tun.exe":     "tun " + v,
-			"Firefox VPN/core/firefox-vpn-tun.exe.sig": "sig " + v,
+			"FoxyVPN/foxyvpn.exe":              "app " + v,
+			"FoxyVPN/flutter_windows.dll":          "flutter " + v,
+			"FoxyVPN/data/app.so":                  "assets " + v,
+			"FoxyVPN/core/firefox-vpn-core.exe":    "core " + v,
+			"FoxyVPN/core/firefox-vpn-tun.exe":     "tun " + v,
+			"FoxyVPN/core/firefox-vpn-tun.exe.sig": "sig " + v,
 		}),
-		"Firefox-VPN-" + v + "-Windows-Setup-x64.exe": []byte("MZ setup " + v),
+		"FoxyVPN-" + v + "-Windows-Setup-x64.exe": []byte("MZ setup " + v),
 	}}
 	r.sign()
 	return r
@@ -106,7 +106,7 @@ func appFolder(t *testing.T, v string, installed bool) (appDir, dataDir string) 
 	t.Helper()
 	appDir = t.TempDir()
 	for name, content := range map[string]string{
-		"firefox-vpn.exe":           "app " + v,
+		"foxyvpn.exe":           "app " + v,
 		"flutter_windows.dll":       "flutter " + v,
 		"data/app.so":               "assets " + v,
 		"data/old-asset.png":        "gone in the new version",
@@ -163,8 +163,8 @@ func waitState(t *testing.T, m *Manager) Status {
 
 func TestParseSumsReadsSha256sumOutput(t *testing.T) {
 	a, b := strings.Repeat("ab", 32), strings.Repeat("CD", 32)
-	got := ParseSums([]byte(a + "  Firefox-VPN-1.2.3-Windows-x64.zip\n" + b + " *SHA256SUMS.txt\r\nnot a line\n\n" + "abc  short.txt\n"))
-	if len(got) != 2 || got["Firefox-VPN-1.2.3-Windows-x64.zip"] != a || got["SHA256SUMS.txt"] != strings.ToLower(b) {
+	got := ParseSums([]byte(a + "  FoxyVPN-1.2.3-Windows-x64.zip\n" + b + " *SHA256SUMS.txt\r\nnot a line\n\n" + "abc  short.txt\n"))
+	if len(got) != 2 || got["FoxyVPN-1.2.3-Windows-x64.zip"] != a || got["SHA256SUMS.txt"] != strings.ToLower(b) {
 		t.Fatalf("got %v", got)
 	}
 }
@@ -368,9 +368,9 @@ func TestInstallPassesOnlyTheAppsOwnArguments(t *testing.T) {
 }
 
 func TestUnzipRefusesNamesOutsideTheFolder(t *testing.T) {
-	for _, name := range []string{"../evil.exe", "Firefox VPN/../../evil.exe", "/abs.exe", `C:\evil.exe`, "Firefox VPN/core/firefox-vpn-core.exe:hidden"} {
+	for _, name := range []string{"../evil.exe", "FoxyVPN/../../evil.exe", "/abs.exe", `C:\evil.exe`, "FoxyVPN/core/firefox-vpn-core.exe:hidden"} {
 		file := filepath.Join(t.TempDir(), "x.zip")
-		os.WriteFile(file, appZip(t, map[string]string{name: "x", "Firefox VPN/firefox-vpn.exe": "app"}), 0o644)
+		os.WriteFile(file, appZip(t, map[string]string{name: "x", "FoxyVPN/foxyvpn.exe": "app"}), 0o644)
 		if err := unzip(file, filepath.Join(t.TempDir(), "out")); err == nil {
 			t.Errorf("%q: unpacked", name)
 		}
@@ -379,7 +379,7 @@ func TestUnzipRefusesNamesOutsideTheFolder(t *testing.T) {
 
 func TestUnzipKeepsAZipWithoutOneTopFolderAsItIs(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "x.zip")
-	os.WriteFile(file, appZip(t, map[string]string{"firefox-vpn.exe": "app", "core/firefox-vpn-core.exe": "core"}), 0o644)
+	os.WriteFile(file, appZip(t, map[string]string{"foxyvpn.exe": "app", "core/firefox-vpn-core.exe": "core"}), 0o644)
 	out := filepath.Join(t.TempDir(), "out")
 	if err := unzip(file, out); err != nil {
 		t.Fatal(err)
@@ -395,7 +395,7 @@ func newVersion(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	for name, content := range map[string]string{
-		"firefox-vpn.exe":           "app 1.2.3",
+		"foxyvpn.exe":           "app 1.2.3",
 		"flutter_windows.dll":       "flutter 1.2.3",
 		"data/app.so":               "assets 1.2.3",
 		"core/firefox-vpn-core.exe": "core 1.2.3",
@@ -413,7 +413,7 @@ func TestSwapReplacesTheAppsFilesAndKeepsTheRest(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, want := range map[string]string{
-		"firefox-vpn.exe":           "app 1.2.3",
+		"foxyvpn.exe":           "app 1.2.3",
 		"data/app.so":               "assets 1.2.3",
 		"core/firefox-vpn-core.exe": "core 1.2.3",
 		"core/firefox-vpn-tun.exe":  "tun 1.2.3",
@@ -429,7 +429,7 @@ func TestSwapReplacesTheAppsFilesAndKeepsTheRest(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(appDir, "data", "old-asset.png")); !errors.Is(err, os.ErrNotExist) {
 		t.Error("an old asset stayed")
 	}
-	if read(t, filepath.Join(backup, "firefox-vpn.exe")) != "app 1.0.0" {
+	if read(t, filepath.Join(backup, "foxyvpn.exe")) != "app 1.0.0" {
 		t.Error("the old app is not kept aside")
 	}
 }
@@ -491,7 +491,7 @@ func TestAFailedSwapPutsTheOldVersionBack(t *testing.T) {
 func TestANewStartReadsTheResultAndCleansUp(t *testing.T) {
 	appDir, dataDir := appFolder(t, "1.2.3", false)
 	dir := filepath.Join(dataDir, "update")
-	for _, p := range []string{"new/firefox-vpn.exe", "backup/firefox-vpn.exe", "updater/firefox-vpn-core.exe", "1.2.3/" + SumsFile, "1.0.0/" + SumsFile, "pending.json"} {
+	for _, p := range []string{"new/foxyvpn.exe", "backup/foxyvpn.exe", "updater/firefox-vpn-core.exe", "1.2.3/" + SumsFile, "1.0.0/" + SumsFile, "pending.json"} {
 		write(t, filepath.Join(dir, filepath.FromSlash(p)), "x")
 	}
 	data, _ := json.Marshal(Result{From: "1.0.0", To: "1.2.3", OK: true, On: true})

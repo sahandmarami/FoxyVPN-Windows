@@ -102,7 +102,7 @@ const (
 )
 
 // AssetName is the release's zip of version v.
-func AssetName(v string) string { return "Firefox-VPN-" + v + "-Windows-x64.zip" }
+func AssetName(v string) string { return "FoxyVPN-" + v + "-Windows-x64.zip" }
 
 // Status is the update's state, for the app (GET /api/status, "update").
 type Status struct {
