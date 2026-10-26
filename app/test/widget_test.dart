@@ -689,6 +689,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.tap(find.text('add'));
+    await tester.pumpAndSettle();
 
     // The key tab is the default: one key field, no autofill group.
     final keyField = tester.widget<TextField>(
