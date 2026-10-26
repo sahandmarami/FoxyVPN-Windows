@@ -40,6 +40,14 @@ class _SignInDialogState extends State<_SignInDialog> {
   late final _email = TextEditingController(text: widget.email);
   final _password = TextEditingController();
   final _answer = TextEditingController();
+  final _key = TextEditingController();
+
+  /// What the dialog shows while no sign-in runs: a FoxyVPN key ('key',
+  /// the default) or the classic email-and-password form ('email').
+  String _mode = 'key';
+
+  /// Set once the core accepted a pasted key and added the account.
+  bool _keyDone = false;
   final _form = GlobalKey<FormState>();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
@@ -74,6 +82,7 @@ class _SignInDialogState extends State<_SignInDialog> {
     _email.dispose();
     _password.dispose();
     _answer.dispose();
+    _key.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
     super.dispose();
@@ -179,6 +188,50 @@ class _SignInDialogState extends State<_SignInDialog> {
     });
   }
 
+  /// Sends the pasted key to the core; the answer comes in this one call
+  /// (no codes, no CAPTCHA), so there is no sign-in session to follow.
+  Future<void> _startKey() async {
+    final api = _api;
+    if (api == null || _sending) return;
+    final key = _key.text.trim();
+    if (key.isEmpty) {
+      setState(() => _error = AppLocalizations.of(context).keyInvalid);
+      return;
+    }
+    setState(() {
+      _sending = true;
+      _error = null;
+      _formProblem = '';
+    });
+    try {
+      await api.signInWithKey(key);
+      if (!mounted) return;
+      await widget.core.refresh(accountsToo: true);
+      if (mounted) setState(() => _keyDone = true);
+    } on CoreApiException catch (e) {
+      if (mounted) {
+        final l = AppLocalizations.of(context);
+        setState(
+          () => _error = switch (e.code) {
+            'key_invalid' => l.keyInvalid,
+            'key_expired' => l.keyExpired,
+            'key_rejected' => l.keyRejected,
+            'key_network' => l.keyNetwork,
+            _ => e.message,
+          },
+        );
+      }
+    } on CoreUnavailable catch (e) {
+      if (mounted) {
+        setState(
+          () => _error = describeProblem(AppLocalizations.of(context), e),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
   void _submitAnswer() {
     final value = _answer.text.trim();
     final id = _state?.id;
@@ -249,16 +302,22 @@ class _SignInDialogState extends State<_SignInDialog> {
             )
           else if (failed)
             FilledButton(onPressed: _restart, child: Text(l.tryAgain))
-          else if (s == null)
-            FilledButton(
-              onPressed: _sending || _checking != null ? null : _start,
-              child: _sending || _checking != null
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(l.signIn),
-            )
+          else if (s == null) ...[
+            if (_keyDone)
+              FilledButton(onPressed: _close, child: Text(l.done))
+            else
+              FilledButton(
+                onPressed: _sending || _checking != null
+                    ? null
+                    : (_mode == 'key' ? _startKey : _start),
+                child: _sending || _checking != null
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l.signIn),
+              ),
+          ]
           else if (s.needsAnswer)
             FilledButton(
               onPressed: _sending ? null : _submitAnswer,
@@ -271,6 +330,91 @@ class _SignInDialogState extends State<_SignInDialog> {
 
   Widget _credentials() {
     final l = AppLocalizations.of(context);
+    if (_keyDone) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(
+              Icons.check_circle_rounded,
+              color: StatusColors.good,
+              size: 32,
+            ),
+            title: Text(l.accountReady),
+            subtitle: Text(l.accountReadyHint),
+          ),
+        ],
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedButton<String>(
+          segments: [
+            ButtonSegment(
+              value: 'key',
+              icon: const Icon(Icons.vpn_key_rounded, size: 18),
+              label: Text(l.signInModeKey),
+            ),
+            ButtonSegment(
+              value: 'email',
+              icon: const Icon(Icons.alternate_email_rounded, size: 18),
+              label: Text(l.signInModeEmail),
+            ),
+          ],
+          selected: {_mode},
+          showSelectedIcon: false,
+          style: const ButtonStyle(visualDensity: VisualDensity.compact),
+          onSelectionChanged: (selection) => setState(() {
+            _mode = selection.first;
+            _error = null;
+            _formProblem = '';
+          }),
+        ),
+        const SizedBox(height: 16),
+        if (_mode == 'key') _keyForm(l) else _emailForm(l),
+      ],
+    );
+  }
+
+  /// The FoxyVPN key form: paste a key, nothing else is asked for.
+  Widget _keyForm(AppLocalizations l) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l.keyIntro, style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _key,
+          autofocus: true,
+          minLines: 2,
+          maxLines: 3,
+          enableSuggestions: false,
+          autocorrect: false,
+          // Keys are typed and shared left to right, also in Persian.
+          textDirection: TextDirection.ltr,
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+          decoration: InputDecoration(
+            labelText: l.keyLabel,
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.vpn_key_rounded),
+          ),
+          onFieldSubmitted: (_) => _startKey(),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 12),
+          _ErrorBox(_error!),
+        ],
+      ],
+    );
+  }
+
+  /// The classic email-and-password form.
+  Widget _emailForm(AppLocalizations l) {
     // The fields are a sign-in form for password managers: they can fill
     // it, and offer to save it when the user signs in (_start); leaving the
     // form otherwise saves nothing.

@@ -1,6 +1,6 @@
 {
   "@@locale": "fa",
-  "appTitle": "Firefox VPN",
+  "appTitle": "FoxyVPN",
   "navOverview": "نمای کلی",
   "navAccounts": "حساب‌ها",
   "navSettings": "تنظیمات",
@@ -399,5 +399,13 @@
   "addProgramFile": "انتخاب فایل…",
   "addProgramName": "نوشتن نام…",
   "programNameHint": "نام فایل برنامه، مثل steam.exe؛ علامت * یعنی هر متنی (steam* یعنی همه برنامه‌های Steam).",
-  "runningProgramsEmpty": "برنامه دیگری در حال اجرا نیست."
+  "runningProgramsEmpty": "برنامه دیگری در حال اجرا نیست.",
+  "signInModeKey": "کلید FoxyVPN",
+  "signInModeEmail": "ایمیل و رمز",
+  "keyIntro": "کلید FoxyVPN را بچسبان. نه ایمیل لازم است و نه رمز — کلید خودش حساب را اضافه می‌کند.",
+  "keyLabel": "کلید FoxyVPN",
+  "keyInvalid": "این کلید معتبر نیست؛ کل کلید را از اولش (FV1...) کپی کن.",
+  "keyExpired": "این کلید منقضی شده است؛ یک کلید تازه بگیر.",
+  "keyRejected": "فایرفاکس توکن داخل کلید را نپذیرفت؛ یک کلید تازه بگیر.",
+  "keyNetwork": "به موزیلا نرسیدیم؛ اینترنت را بررسی کن و دوباره امتحان کن."
 }

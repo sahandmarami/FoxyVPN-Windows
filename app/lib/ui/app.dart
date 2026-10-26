@@ -22,7 +22,7 @@ import 'widgets.dart';
 
 ThemeData _theme(Brightness brightness, Locale locale) {
   final scheme = ColorScheme.fromSeed(
-    seedColor: const Color(0xFF5B5BD6),
+    seedColor: const Color(0xFFFF7A18),
     brightness: brightness,
   );
   final dark = brightness == Brightness.dark;

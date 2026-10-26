@@ -11,8 +11,8 @@ import (
 // ownPrograms are this app's own executables, which never skip the VPN by
 // choice.
 var ownPrograms = map[string]bool{
-	"firefox-vpn.exe": true, "firefox-vpn-core.exe": true, "firefox-vpn-tun.exe": true,
-	"firefox-vpn": true, "firefox-vpn-core": true, "firefox-vpn-tun": true,
+	"foxyvpn.exe": true, "firefox-vpn-core.exe": true, "firefox-vpn-tun.exe": true,
+	"foxyvpn": true, "firefox-vpn-core": true, "firefox-vpn-tun": true,
 }
 
 // runningPrograms are the programs running on this computer, for the TUN

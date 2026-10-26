@@ -74,7 +74,7 @@ const (
 
 // AppExe and CoreExe are the app and the core inside the app's folder.
 const (
-	AppExe  = "firefox-vpn.exe"
+	AppExe  = "foxyvpn.exe"
 	CoreExe = "core/firefox-vpn-core.exe"
 )
 

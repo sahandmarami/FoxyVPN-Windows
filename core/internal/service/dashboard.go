@@ -221,6 +221,7 @@ func (s *dashboardServer) handler() http.Handler {
 	mux.HandleFunc("DELETE /api/accounts/{id}", s.handleAccountRemove)
 
 	mux.HandleFunc("POST /api/signin", s.handleSignInStart)
+	mux.HandleFunc("POST /api/signin/key", s.handleSignInKey)
 	mux.HandleFunc("GET /api/signin/{id}", s.handleSignInGet)
 	mux.HandleFunc("POST /api/signin/{id}", s.handleSignInAnswer)
 	mux.HandleFunc("DELETE /api/signin/{id}", s.handleSignInCancel)

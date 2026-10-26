@@ -20,9 +20,9 @@
 ; itself and installs the service in Program Files; the uninstall removes it
 ; again.
 
-#define AppName "Firefox VPN"
-#define AppExe "firefox-vpn.exe"
-#define AppDir "Firefox VPN Client"
+#define AppName "FoxyVPN"
+#define AppExe "foxyvpn.exe"
+#define AppDir "FoxyVPN Client"
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
@@ -33,7 +33,7 @@
   #define OutputDir "."
 #endif
 #ifndef OutputName
-  #define OutputName "Firefox-VPN-Setup"
+  #define OutputName "FoxyVPN-Setup"
 #endif
 
 [Setup]

@@ -8,7 +8,7 @@ const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '0.0.0');
 
 /// The GitHub repository, "owner/name", for the source link and the update
 /// check.
-const githubRepo = 'armanlife/firefox-vpn-client';
+const githubRepo = 'sahandmarami/FoxyVPN-Windows';
 
 /// A newer release on GitHub.
 class Release {

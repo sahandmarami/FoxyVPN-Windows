@@ -50,10 +50,14 @@ class CoreUnavailable implements Exception {
 
 /// An error answer of the API (`{"error": "..."}` with a 4xx/5xx status).
 class CoreApiException implements Exception {
-  const CoreApiException(this.statusCode, this.message);
+  const CoreApiException(this.statusCode, this.message, {this.code = ''});
 
   final int statusCode;
   final String message;
+
+  /// A machine-readable code for problems the app translates itself
+  /// ('' when the core does not send one).
+  final String code;
 
   @override
   String toString() => message;
@@ -237,6 +241,12 @@ class CoreApi {
           'password': password,
         }),
       );
+
+  /// Adds an account from a FoxyVPN key (FV1): the core checks the key,
+  /// exchanges its token and puts the account into rotation. 422 with an
+  /// error_code when the key is invalid, expired or refused.
+  Future<void> signInWithKey(String key) =>
+      _json('POST', '/api/signin/key', {'key': key});
 
   /// Signs an account in again with its stored password; 409 when the core
   /// has none, and the user must type it.
@@ -432,7 +442,11 @@ class CoreApi {
           {'error': final String e} => e,
           _ => 'HTTP ${res.statusCode}',
         };
-        throw CoreApiException(res.statusCode, message);
+        final code = switch (decoded) {
+          {'error_code': final String c} => c,
+          _ => '',
+        };
+        throw CoreApiException(res.statusCode, message, code: code);
       }
       return decoded is Map<String, Object?> ? decoded : const {};
     } on SocketException catch (e) {

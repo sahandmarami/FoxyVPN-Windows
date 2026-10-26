@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Firefox VPN",
+  "appTitle": "FoxyVPN",
   "navOverview": "Overview",
   "navAccounts": "Accounts",
   "navSettings": "Settings",
@@ -194,7 +194,11 @@
   "reasonQuotaThreshold": "Used {percent}% of its data, so the next account took over.",
   "@reasonQuotaThreshold": {
     "description": "An account set aside at the switch threshold (percent, the setting) while the next account is used.",
-    "placeholders": {"percent": {"type": "int"}}
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
   },
   "reasonQuotaExhausted": "This month's data is used up; it is used again after the monthly reset.",
   "reasonSignInRequired": "Sign in again to use this account.",
@@ -919,5 +923,13 @@
   "addProgramFile": "Choose a file…",
   "addProgramName": "Type a name…",
   "programNameHint": "A program's file name, such as steam.exe; * stands for any text (steam* is every Steam program).",
-  "runningProgramsEmpty": "No other programs are running."
+  "runningProgramsEmpty": "No other programs are running.",
+  "signInModeKey": "FoxyVPN Key",
+  "signInModeEmail": "Email & Password",
+  "keyIntro": "Paste your FoxyVPN key. No email and no password needed — the key adds the account by itself.",
+  "keyLabel": "FoxyVPN key",
+  "keyInvalid": "This key is not valid. Copy the whole key, starting with FV1.",
+  "keyExpired": "This key has expired. Ask for a new one.",
+  "keyRejected": "Firefox refused the token inside the key. Ask for a fresh key.",
+  "keyNetwork": "Mozilla could not be reached. Check the connection and try again."
 }

@@ -395,6 +395,29 @@ func (s *dashboardServer) handleSignInStart(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusAccepted, view)
 }
 
+func (s *dashboardServer) handleSignInKey(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Key string `json:"key"`
+	}
+	if !readJSON(w, r, &in) {
+		return
+	}
+	acc, err := s.d.signInWithKey(r.Context(), in.Key)
+	if err != nil {
+		var ke *keyError
+		if errors.As(err, &ke) {
+			writeJSON(w, http.StatusUnprocessableEntity, map[string]string{
+				"error":      ke.Error(),
+				"error_code": ke.code,
+			})
+			return
+		}
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"ok": "true", "account_id": acc.ID})
+}
+
 func (s *dashboardServer) handleSignInGet(w http.ResponseWriter, r *http.Request) {
 	session, ok := s.d.signins.get(r.PathValue("id"))
 	if !ok {

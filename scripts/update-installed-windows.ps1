@@ -32,7 +32,7 @@ $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{6F3A
 $dir = (Get-ItemProperty $uninstallKey -ErrorAction SilentlyContinue).InstallLocation
 if (-not $dir) { throw 'Firefox VPN is not installed for this user; run the Setup once' }
 $dir = $dir.TrimEnd('\')
-$appExe = "$dir\firefox-vpn.exe"
+$appExe = "$dir\foxyvpn.exe"
 $dataDir = "$dir\user-data"
 
 # The same build as scripts\build-windows.ps1, the core into app\build.
