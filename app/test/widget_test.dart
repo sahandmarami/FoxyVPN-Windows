@@ -722,6 +722,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.signInKey, 'FV1.old-key');
     expect(find.textContaining('not valid'), findsOneWidget);
+    core.dispose();
   });
 
   testWidgets('a wrong password keeps the form and what was typed', (
