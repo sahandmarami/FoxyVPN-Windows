@@ -271,6 +271,19 @@ class FakeApi implements CoreApi {
   /// The email of the last sign-in started.
   String signInEmail = '';
 
+  /// The key of the last key sign-in, and an error to answer with
+  /// (with the key_invalid code) instead of success.
+  String? signInKey;
+  String? keyAnswerError;
+
+  @override
+  Future<void> signInWithKey(String key) async {
+    signInKey = key;
+    if (keyAnswerError != null) {
+      throw CoreApiException(422, keyAnswerError!, code: 'key_invalid');
+    }
+  }
+
   /// What a started sign-in answers; otherwise it is working, as the
   /// core's is, and the next read finds the password accepted and an email
   /// code asked for.
@@ -498,6 +511,9 @@ void main() {
     );
     await tester.tap(find.text('add'));
     await tester.pumpAndSettle();
+    // The key tab is the default; these tests exercise the email form.
+    await tester.tap(find.text('Email & Password'));
+    await tester.pumpAndSettle();
 
     final fields = tester
         .widgetList<TextField>(find.byType(TextField))
@@ -579,6 +595,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('add'));
     await tester.pumpAndSettle();
+    // The key tab is the default; these tests exercise the email form.
+    await tester.tap(find.text('Email & Password'));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'nobody@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'pw');
     await tester.tap(find.byType(FilledButton));
@@ -629,6 +648,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('add'));
     await tester.pumpAndSettle();
+    // The key tab is the default; these tests exercise the email form.
+    await tester.tap(find.text('Email & Password'));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'google@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'pw');
     await tester.tap(find.byType(FilledButton));
@@ -642,6 +664,62 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
     core.dispose();
+  });
+
+  testWidgets('a FoxyVPN key adds the account without an email', (
+    tester,
+  ) async {
+    stillMotion(tester);
+    final api = FakeApi();
+    final core = CoreController(
+      () async => api,
+      pollInterval: const Duration(hours: 1),
+    );
+    core.start();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSignInDialog(context, core),
+            child: const Text('add'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The key tab is the default: one key field, no autofill group.
+    final keyField = tester.widget<TextField>(
+      find.widgetWithText(TextField, 'FoxyVPN key'),
+    );
+    expect(keyField.autofillHints, isNull);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'FoxyVPN key'),
+      'FV1.test-key',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await tester.pumpAndSettle();
+    expect(api.signInKey, 'FV1.test-key');
+    expect(find.text('Account ready'), findsOneWidget);
+
+    // A refused key comes back as the app's own words.
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    api.signInKey = null;
+    api.keyAnswerError = 'the key expired';
+    await tester.tap(find.text('add'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'FoxyVPN key'),
+      'FV1.old-key',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await tester.pumpAndSettle();
+    expect(api.signInKey, 'FV1.old-key');
+    expect(find.textContaining('not valid'), findsOneWidget);
   });
 
   testWidgets('a wrong password keeps the form and what was typed', (
@@ -691,6 +769,9 @@ void main() {
           c.method == 'TextInput.finishAutofillContext' && c.arguments == true,
     );
     await tester.tap(find.text('add'));
+    await tester.pumpAndSettle();
+    // The key tab is the default; these tests exercise the email form.
+    await tester.tap(find.text('Email & Password'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'me@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'almost-righ');
