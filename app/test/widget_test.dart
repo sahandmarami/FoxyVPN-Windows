@@ -1022,7 +1022,7 @@ void main() {
     // The accounts page says how an account arrives: as a key.
     await tester.tap(find.text('Accounts'));
     await tester.pumpAndSettle();
-    expect(find.text('FoxyVPN key'), findsOneWidget);
+    expect(find.text('FoxyVPN Key'), findsOneWidget);
     expect(
       find.text(
         'Paste your FoxyVPN key. No email and no password needed — the key adds the account by itself.',
