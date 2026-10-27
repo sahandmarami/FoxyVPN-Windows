@@ -1019,11 +1019,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('DNS'), findsOneWidget);
 
-    // The accounts page says where to make an account.
+    // The accounts page says how an account arrives: as a key.
     await tester.tap(find.text('Accounts'));
     await tester.pumpAndSettle();
-    expect(find.text("Don't have a Firefox Account?"), findsOneWidget);
-    expect(find.text('accounts.firefox.com'), findsOneWidget);
+    expect(find.text('FoxyVPN key'), findsOneWidget);
+    expect(
+      find.text(
+        'Paste your FoxyVPN key. No email and no password needed — the key adds the account by itself.',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('About'));
     await tester.pumpAndSettle();
