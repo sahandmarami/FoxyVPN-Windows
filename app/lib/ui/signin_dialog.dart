@@ -55,6 +55,10 @@ class _SignInDialogState extends State<_SignInDialog> {
   SignInState? _state;
   String? _error;
 
+  /// The core's own technical detail under a key error (an FxA errno, an
+  /// HTTP status): the localized message explains, this proves.
+  String _errorDetail = '';
+
   /// A sign-in started from the form whose password Mozilla has not
   /// accepted yet: the form stays (with the button busy) until it does,
   /// so a password manager is asked to save only a password that works.
@@ -211,15 +215,26 @@ class _SignInDialogState extends State<_SignInDialog> {
     } on CoreApiException catch (e) {
       if (mounted) {
         final l = AppLocalizations.of(context);
-        setState(
-          () => _error = switch (e.code) {
-            'key_invalid' => l.keyInvalid,
-            'key_expired' => l.keyExpired,
-            'key_rejected' => l.keyRejected,
-            'key_network' => l.keyNetwork,
-            _ => e.message,
-          },
-        );
+        final localized = switch (e.code) {
+          'key_invalid' => l.keyInvalid,
+          'key_expired' => l.keyExpired,
+          'key_rejected' => l.keyRejected,
+          'key_network' => l.keyNetwork,
+          _ => null,
+        };
+        setState(() {
+          if (localized != null) {
+            _error = localized;
+            // the default text carries no detail; anything else does
+            _errorDetail =
+                e.message.isEmpty || e.message == 'the FoxyVPN key was not accepted'
+                ? ''
+                : e.message;
+          } else {
+            _error = e.message;
+            _errorDetail = '';
+          }
+        });
       }
     } on CoreUnavailable catch (e) {
       if (mounted) {
@@ -256,6 +271,7 @@ class _SignInDialogState extends State<_SignInDialog> {
     _state = null;
     _checking = null;
     _error = null;
+    _errorDetail = '';
     _formProblem = '';
     _answer.clear();
   });
@@ -371,6 +387,7 @@ class _SignInDialogState extends State<_SignInDialog> {
           onSelectionChanged: (selection) => setState(() {
             _mode = selection.first;
             _error = null;
+            _errorDetail = '';
             _formProblem = '';
           }),
         ),
@@ -408,6 +425,16 @@ class _SignInDialogState extends State<_SignInDialog> {
         if (_error != null) ...[
           const SizedBox(height: 12),
           _ErrorBox(_error!),
+          if (_errorDetail.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              _errorDetail,
+              textDirection: TextDirection.ltr,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ],
       ],
     );

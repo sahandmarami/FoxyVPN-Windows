@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -24,7 +25,13 @@ import (
 
 // The keymaker's public key (Ed25519, base64). A key is trusted only when
 // this key signed it.
-const foxyKeyPublic = "hA5+kmj6X7JrqYWraZQY+q09q72mNUJx2aLPNnX/Ntw="
+var foxyKeyPublic = "hA5+kmj6X7JrqYWraZQY+q09q72mNUJx2aLPNnX/Ntw="
+
+// keyJunkRe strips everything that sneaks into a pasted key but is not part
+// of it: spaces and line breaks, non-breaking and other Unicode spaces, and
+// the zero-width and bidi control marks (RLM, LRM, ZWNJ, ...) that Persian
+// chat apps add when the key travels inside right-to-left text.
+var keyJunkRe = regexp.MustCompile(`[\p{Z}\s\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}\x{FEFF}]+`)
 
 // Codes of a keyError; the apps say them in their language.
 const (
@@ -33,6 +40,20 @@ const (
 	KeyErrRejected = "key_rejected" // FxA refused the token inside the key
 	KeyErrNetwork  = "key_network"  // Mozilla could not be reached
 )
+
+// shortReason keeps an underlying error for the apps' detail line without
+// dumping a whole error body: the first line, at most ~180 runes.
+func shortReason(err error) string {
+	if err == nil {
+		return ""
+	}
+	text := strings.SplitN(strings.TrimSpace(err.Error()), "\n", 2)[0]
+	runes := []rune(text)
+	if len(runes) > 180 {
+		text = string(runes[:180]) + "…"
+	}
+	return text
+}
 
 // keyError says what went wrong with a key sign-in, with a code the apps
 // translate.
@@ -64,7 +85,7 @@ type foxyKeyPayload struct {
 	Mb   int64  `json:"mb"`
 	Exp  int64  `json:"exp"`
 	ID   string `json:"id"`
-	RT   string `json:"rt"`  // the Firefox Account refresh token
+	RT   string `json:"rt"` // the Firefox Account refresh token
 	Gist string `json:"gist"`
 	GT   string `json:"gt"`
 }
@@ -72,12 +93,17 @@ type foxyKeyPayload struct {
 // parseFoxyKey checks the FV1 envelope and its signature and returns the
 // payload.
 func parseFoxyKey(key string) (*foxyKeyPayload, error) {
-	key = strings.TrimSpace(key)
-	// Tolerate a "FoxyVPN:" prefix (sharing apps sometimes add one) and
-	// line breaks inside the key.
+	// Tolerate whatever the sharing app wrapped around the key: a
+	// "FoxyVPN:" label, a Persian caption before it, line breaks inside,
+	// and invisible bidi marks. All junk is removed first (replacing it
+	// with spaces would split "FV1" from its first dot), then a label
+	// prefix is dropped, then everything before the "FV1." envelope.
+	key = keyJunkRe.ReplaceAllString(strings.TrimSpace(key), "")
 	key = strings.TrimPrefix(key, "FoxyVPN: ")
 	key = strings.TrimPrefix(key, "FoxyVPN:")
-	key = strings.Join(strings.Fields(key), "")
+	if i := strings.Index(key, "FV1."); i > 0 {
+		key = key[i:]
+	}
 	parts := strings.Split(key, ".")
 	if len(parts) != 3 || parts[0] != "FV1" || parts[1] == "" || parts[2] == "" {
 		return nil, errors.New("this is not a FoxyVPN key")
@@ -122,22 +148,24 @@ func (d *Daemon) signInWithKey(ctx context.Context, key string) (accounts.Accoun
 	tok, err := fxa.RefreshToken(ctx, kp.RT)
 	if err != nil {
 		if errors.Is(err, fxa.ErrReauthRequired) {
-			return accounts.Account{}, keyErr(KeyErrRejected, "", err)
+			// the token inside the key is dead (rotated away or
+			// revoked): the detail says exactly what Mozilla answered
+			return accounts.Account{}, keyErr(KeyErrRejected, shortReason(err), err)
 		}
 		if code := proxy.FailureCode(err); code == proxy.FailureNoNetwork || code == proxy.FailureUnreachable {
-			return accounts.Account{}, keyErr(KeyErrNetwork, "", err)
+			return accounts.Account{}, keyErr(KeyErrNetwork, shortReason(err), err)
 		}
-		return accounts.Account{}, keyErr(KeyErrRejected, "", err)
+		return accounts.Account{}, keyErr(KeyErrRejected, shortReason(err), err)
 	}
 	email, err := fxa.ProfileEmail(ctx, tok.AccessToken)
 	if err != nil {
 		if errors.Is(err, fxa.ErrReauthRequired) {
-			return accounts.Account{}, keyErr(KeyErrRejected, "", err)
+			return accounts.Account{}, keyErr(KeyErrRejected, shortReason(err), err)
 		}
 		if code := proxy.FailureCode(err); code == proxy.FailureNoNetwork || code == proxy.FailureUnreachable {
-			return accounts.Account{}, keyErr(KeyErrNetwork, "", err)
+			return accounts.Account{}, keyErr(KeyErrNetwork, shortReason(err), err)
 		}
-		return accounts.Account{}, keyErr(KeyErrNetwork, "", err)
+		return accounts.Account{}, keyErr(KeyErrNetwork, shortReason(err), err)
 	}
 	acc, err := d.addSignedInAccount(email, "", tok)
 	if err != nil {

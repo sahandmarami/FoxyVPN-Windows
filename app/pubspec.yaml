@@ -2,7 +2,7 @@ name: firefox_vpn
 description: "FoxyVPN — the Firefox-account VPN, dressed for Foxy (key sign-in included)"
 publish_to: 'none'
 
-version: 1.0.5+125
+version: 1.0.6+126
 
 environment:
   sdk: ^3.13.5
