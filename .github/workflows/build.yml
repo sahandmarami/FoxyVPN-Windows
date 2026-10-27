@@ -107,8 +107,8 @@ jobs:
         run: |
           $v = '${{ needs.test.outputs.version }}'
           New-Item -ItemType Directory out | Out-Null
-          Move-Item "dist/Firefox-VPN-$v-Windows-x64.zip" out/Firefox-VPN-Windows-x64.zip
-          Move-Item "dist/Firefox-VPN-$v-Windows-Setup-x64.exe" out/Firefox-VPN-Windows-Setup-x64.exe
+          Move-Item "dist/FoxyVPN-$v-Windows-x64.zip" out/FoxyVPN-Windows-x64.zip
+          Move-Item "dist/FoxyVPN-$v-Windows-Setup-x64.exe" out/FoxyVPN-Windows-Setup-x64.exe
       - uses: actions/upload-artifact@v7
         with:
           name: windows
