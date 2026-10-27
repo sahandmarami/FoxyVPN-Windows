@@ -10,14 +10,19 @@ import (
 
 // ProfileEmail asks FxA who an OAuth access token belongs to. The token
 // must carry the "profile" scope (the client's own scope does).
+//
+// The profile lives on its own server (profile.accounts.firefox.com), not
+// on the auth server: api.accounts.firefox.com has no /profile route and
+// answers it with HTTP 404 (errno 999), which once broke every key
+// sign-in — the only flow that must learn the email from the token.
 func ProfileEmail(ctx context.Context, accessToken string) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fxaAuthServer+"/profile", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fxaProfileServer+"/profile", nil)
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	resp, err := fxaDo(ctx, func() (*http.Request, error) {
-		r, err := http.NewRequestWithContext(ctx, http.MethodGet, fxaAuthServer+"/profile", nil)
+		r, err := http.NewRequestWithContext(ctx, http.MethodGet, fxaProfileServer+"/profile", nil)
 		if err != nil {
 			return nil, err
 		}

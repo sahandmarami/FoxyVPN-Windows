@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firefox_vpn/app_info.dart';
 import 'package:firefox_vpn/app_settings.dart';
@@ -324,73 +321,75 @@ void stillMotion(WidgetTester tester) {
 }
 
 void main() {
-  testWidgets('shows the state, turns the VPN off, lists accounts', (
-    tester,
-  ) async {
-    stillMotion(tester);
-    tester.view.physicalSize = const Size(1200, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'shows the state, turns the VPN off, lists accounts',
+    (tester) async {
+      stillMotion(tester);
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    final api = FakeApi();
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
-    core.start();
-    await tester.pumpAndSettle();
+      final api = FakeApi();
+      final core = CoreController(
+        () async => api,
+        pollInterval: const Duration(hours: 1),
+      );
+      await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
+      core.start();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Connected'), findsOneWidget);
-    // Where the traffic goes: the country, under how it was chosen.
-    expect(find.text('Netherlands'), findsOneWidget);
-    expect(find.text('Recommended location'), findsOneWidget);
-    expect(find.textContaining('Amsterdam'), findsNothing);
-    // The data used rather than the email.
-    expect(find.text('Data used'), findsOneWidget);
-    expect(find.textContaining('@example.com'), findsNothing);
-    // The two modes, picked by name; System proxy is on.
-    expect(find.text('Proxy'), findsOneWidget);
-    expect(find.text('System proxy'), findsOneWidget);
-    expect(find.textContaining('Windows and most apps'), findsOneWidget);
+      expect(find.text('Connected'), findsOneWidget);
+      // Where the traffic goes: the country, under how it was chosen.
+      expect(find.text('Netherlands'), findsOneWidget);
+      expect(find.text('Recommended location'), findsOneWidget);
+      expect(find.textContaining('Amsterdam'), findsNothing);
+      // The data used rather than the email.
+      expect(find.text('Data used'), findsOneWidget);
+      expect(find.textContaining('@example.com'), findsNothing);
+      // The two modes, picked by name; System proxy is on.
+      expect(find.text('Proxy'), findsOneWidget);
+      expect(find.text('System proxy'), findsOneWidget);
+      expect(find.textContaining('Windows and most apps'), findsOneWidget);
 
-    // Proxy mode: Windows is left alone, and nothing disconnects.
-    await tester.tap(find.text('Proxy'));
-    await tester.pumpAndSettle();
-    expect(api.mode, 'clear');
-    expect(find.text('Connected'), findsOneWidget);
-    expect(find.text('Netherlands'), findsOneWidget);
-    // The proxy's address shows when the mouse is over Proxy.
-    expect(
-      find.byTooltip('Proxy service active · 127.0.0.1:10810'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('Only apps set up'), findsOneWidget);
+      // Proxy mode: Windows is left alone, and nothing disconnects.
+      await tester.tap(find.text('Proxy'));
+      await tester.pumpAndSettle();
+      expect(api.mode, 'clear');
+      expect(find.text('Connected'), findsOneWidget);
+      expect(find.text('Netherlands'), findsOneWidget);
+      // The proxy's address shows when the mouse is over Proxy.
+      expect(
+        find.byTooltip('Proxy service active · 127.0.0.1:10810'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Only apps set up'), findsOneWidget);
 
-    await tester.tap(find.text('System proxy'));
-    await tester.pumpAndSettle();
-    expect(api.mode, 'set');
-    expect(find.text('Connected'), findsOneWidget);
+      await tester.tap(find.text('System proxy'));
+      await tester.pumpAndSettle();
+      expect(api.mode, 'set');
+      expect(find.text('Connected'), findsOneWidget);
 
-    // The button turns the proxy off, and on again.
-    await tester.tap(find.byTooltip('Click to disconnect'));
-    await tester.pumpAndSettle();
-    expect(api.on, isFalse);
-    expect(find.text('Disconnected'), findsOneWidget);
-    await tester.tap(find.byTooltip('Click to connect'));
-    await tester.pumpAndSettle();
-    expect(api.on, isTrue);
-    expect(find.text('Connected'), findsOneWidget);
+      // The button turns the proxy off, and on again.
+      await tester.tap(find.byTooltip('Click to disconnect'));
+      await tester.pumpAndSettle();
+      expect(api.on, isFalse);
+      expect(find.text('Disconnected'), findsOneWidget);
+      await tester.tap(find.byTooltip('Click to connect'));
+      await tester.pumpAndSettle();
+      expect(api.on, isTrue);
+      expect(find.text('Connected'), findsOneWidget);
 
-    await tester.tap(find.text('Accounts').first);
-    await tester.pumpAndSettle();
-    expect(find.text('alice@example.com'), findsOneWidget);
-    expect(find.text('Needs sign-in'), findsOneWidget);
-    expect(find.text('Sign in again'), findsOneWidget);
+      await tester.tap(find.text('Accounts').first);
+      await tester.pumpAndSettle();
+      expect(find.text('alice@example.com'), findsOneWidget);
+      expect(find.text('Needs sign-in'), findsOneWidget);
+      expect(find.text('Sign in again'), findsOneWidget);
 
-    await tester.pumpWidget(const SizedBox());
-    core.dispose();
-  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+      await tester.pumpWidget(const SizedBox());
+      core.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.windows),
+  );
 
   testWidgets('explains a missing core', (tester) async {
     stillMotion(tester);
@@ -472,11 +471,13 @@ void main() {
     core.dispose();
   });
 
-  testWidgets('the sign-in form is one a password manager fills and saves', (
+  testWidgets('the sign-in dialog is key-only: one key field, no email form', (
     tester,
   ) async {
     stillMotion(tester);
-    final api = FakeApi();
+    final api = FakeApi()
+      ..keyAnswerError =
+          'FxA error (HTTP 404, errno 999): {"code":404,"error":"Not Found"}';
     final core = CoreController(
       () async => api,
       pollInterval: const Duration(hours: 1),
@@ -495,172 +496,23 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    final calls = <MethodCall>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.textInput,
-      (call) async {
-        calls.add(call);
-        return null;
-      },
-    );
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        SystemChannels.textInput,
-        null,
-      ),
-    );
     await tester.tap(find.text('add'));
     await tester.pumpAndSettle();
-    // The key tab is the default; these tests exercise the email form.
-    await tester.tap(find.text('Email & Password'));
-    await tester.pumpAndSettle();
 
-    final fields = tester
-        .widgetList<TextField>(find.byType(TextField))
-        .toList();
-    expect(fields[0].autofillHints, contains(AutofillHints.email));
-    expect(fields[1].autofillHints, [AutofillHints.password]);
-    expect(find.byType(AutofillGroup), findsOneWidget);
+    final l = lookupAppLocalizations(const Locale('en'));
+    // No tabs, no email/password fields: the key field is all there is.
+    expect(find.byType(SegmentedButton<String>), findsNothing);
+    expect(find.byType(AutofillGroup), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text(l.keyIntro), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField).at(0), 'me@example.com');
-    await tester.enterText(find.byType(TextField).at(1), 'secret-pass');
-    calls.clear();
-    List<MethodCall> finish() => calls
-        .where((c) => c.method == 'TextInput.finishAutofillContext')
-        .toList();
+    // A refused key answers in the app's words, with the core's technical
+    // detail underneath it.
+    await tester.enterText(find.byType(TextField), 'FV1.dead-key');
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
-    await tester.pump();
-    await tester.pump();
-    // Until Mozilla accepts the password, the form stays (the button busy)
-    // and nothing is offered for saving.
-    expect(api.signInEmail, 'me@example.com');
-    expect(find.byType(AutofillGroup), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(finish(), isEmpty);
-
-    // The next read finds it accepted: the save is asked for, then the
-    // form's cancel when it closes follows (the engine ignores it then: no
-    // field is connected any more).
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump();
-    await tester.pump();
-    expect(finish(), isNotEmpty);
-    expect(finish().first.arguments, true);
-
-    // The code step's field is offered one-time codes.
     await tester.pumpAndSettle();
-    expect(tester.widget<TextField>(find.byType(TextField)).autofillHints, [
-      AutofillHints.oneTimeCode,
-    ]);
-    // The emailed code takes digits only, from the number keyboard; a
-    // Persian keyboard's digits become 0-9.
-    final code = tester.widget<TextField>(find.byType(TextField));
-    expect(code.keyboardType, TextInputType.number);
-    await tester.enterText(find.byType(TextField), '۱۲a3 4-۵٦');
-    expect(code.controller!.text, '123456');
-
-    await tester.pumpWidget(const SizedBox());
-    core.dispose();
-  });
-
-  testWidgets('an email without an account says so and how to make one', (
-    tester,
-  ) async {
-    stillMotion(tester);
-    final api = FakeApi()
-      ..signInOutcome = {
-        'step': SignInStep.failed,
-        'message': 'The account was not added.',
-        'error': 'No Firefox Account exists for this email.',
-        'error_code': SignInError.noAccount,
-      };
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    core.start();
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('fa'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => showSignInDialog(context, core),
-            child: const Text('add'),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('add'));
-    await tester.pumpAndSettle();
-    // The key tab is the default; these tests exercise the email form.
-    await tester.tap(find.text('ایمیل و رمز'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), 'nobody@example.com');
-    await tester.enterText(find.byType(TextField).at(1), 'pw');
-    await tester.tap(find.byType(FilledButton));
-    await tester.pumpAndSettle();
-
-    final l = lookupAppLocalizations(const Locale('fa'));
-    // The form is back with the email as typed, to correct it.
-    expect(find.text(l.signInFailed), findsNothing);
-    expect(find.text('nobody@example.com'), findsOneWidget);
-    expect(find.text(l.signInNoAccount), findsOneWidget);
-    expect(find.text(l.signInNoAccountHint), findsOneWidget);
-    expect(find.text(l.createAccountButton), findsOneWidget);
-    expect(find.textContaining('No Firefox Account'), findsNothing);
-
-    await tester.pumpWidget(const SizedBox());
-    core.dispose();
-  });
-
-  testWidgets('an account without a password offers to set one', (
-    tester,
-  ) async {
-    stillMotion(tester);
-    final api = FakeApi()
-      ..signInOutcome = {
-        'step': SignInStep.failed,
-        'message': 'The account was not added.',
-        'error': 'This account has no password.',
-        'error_code': SignInError.noPassword,
-      };
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    core.start();
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('fa'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => showSignInDialog(context, core),
-            child: const Text('add'),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('add'));
-    await tester.pumpAndSettle();
-    // The key tab is the default; these tests exercise the email form.
-    await tester.tap(find.text('ایمیل و رمز'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), 'google@example.com');
-    await tester.enterText(find.byType(TextField).at(1), 'pw');
-    await tester.tap(find.byType(FilledButton));
-    await tester.pumpAndSettle();
-
-    final l = lookupAppLocalizations(const Locale('fa'));
-    // Its own text, and the button to set a password instead of Try again.
-    expect(find.text(l.signInNoPassword), findsOneWidget);
-    expect(find.text(l.setPasswordButton), findsOneWidget);
-    expect(find.text(l.tryAgain), findsNothing);
+    expect(find.text(l.keyInvalid), findsOneWidget);
+    expect(find.textContaining('errno 999'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     core.dispose();
@@ -693,15 +545,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // The key tab is the default: one key field, no autofill group.
-    final keyField = tester.widget<TextField>(
-      find.byType(TextField).first,
-    );
+    final keyField = tester.widget<TextField>(find.byType(TextField).first);
     expect(keyField.autofillHints, isNull);
 
-    await tester.enterText(
-      find.byType(TextField).first,
-      'FV1.test-key',
-    );
+    await tester.enterText(find.byType(TextField).first, 'FV1.test-key');
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
     await tester.pumpAndSettle();
     expect(api.signInKey, 'FV1.test-key');
@@ -714,100 +561,11 @@ void main() {
     api.keyAnswerError = 'the key expired';
     await tester.tap(find.text('add'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byType(TextField).first,
-      'FV1.old-key',
-    );
+    await tester.enterText(find.byType(TextField).first, 'FV1.old-key');
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
     await tester.pumpAndSettle();
     expect(api.signInKey, 'FV1.old-key');
     expect(find.textContaining('not valid'), findsOneWidget);
-    core.dispose();
-  });
-
-  testWidgets('a wrong password keeps the form and what was typed', (
-    tester,
-  ) async {
-    stillMotion(tester);
-    final api = FakeApi()
-      ..signInOutcome = {
-        'step': SignInStep.failed,
-        'error': 'Incorrect password.',
-        'error_code': SignInError.wrongPassword,
-      };
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    core.start();
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => showSignInDialog(context, core),
-            child: const Text('add'),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    final calls = <MethodCall>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.textInput,
-      (call) async {
-        calls.add(call);
-        return null;
-      },
-    );
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        SystemChannels.textInput,
-        null,
-      ),
-    );
-    bool saveAsked() => calls.any(
-      (c) =>
-          c.method == 'TextInput.finishAutofillContext' && c.arguments == true,
-    );
-    await tester.tap(find.text('add'));
-    await tester.pumpAndSettle();
-    // The key tab is the default; these tests exercise the email form.
-    await tester.tap(find.text('Email & Password'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), 'me@example.com');
-    await tester.enterText(find.byType(TextField).at(1), 'almost-righ');
-    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
-    await tester.pumpAndSettle();
-
-    final l = lookupAppLocalizations(const Locale('en'));
-    expect(find.text(l.signInWrongPassword), findsOneWidget);
-    // A refused password is not offered for saving.
-    expect(saveAsked(), isFalse);
-    final fields = tester
-        .widgetList<TextField>(find.byType(TextField))
-        .toList();
-    expect(fields, hasLength(2));
-    expect(fields[0].controller!.text, 'me@example.com');
-    expect(fields[1].controller!.text, 'almost-righ');
-    expect(fields[1].focusNode!.hasFocus, isTrue);
-    expect(find.widgetWithText(FilledButton, 'Sign in'), findsOneWidget);
-
-    // Sending the corrected password starts a new sign-in.
-    api.signInOutcome = null;
-    await tester.enterText(find.byType(TextField).at(1), 'almost-right');
-    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump();
-    await tester.pumpAndSettle();
-    // Accepted: now it is offered.
-    expect(saveAsked(), isTrue);
-    expect(find.text(l.signInWrongPassword), findsNothing);
-    expect(find.text(l.stepEmailCode('me@example.com')), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox());
     core.dispose();
   });
 
@@ -1028,108 +786,116 @@ void main() {
     core.dispose();
   });
 
-  testWidgets('a refused location offers the recommended one', (tester) async {
-    stillMotion(tester);
-    tester.view.physicalSize = const Size(1200, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'a refused location offers the recommended one',
+    (tester) async {
+      stillMotion(tester);
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    // The chosen location's server refuses the account: the test fails.
-    final api = FakeApi()
-      ..location = 'JP'
-      ..online = false
-      ..testErrorCode = Failure.locationRefused;
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
-    core.start();
-    await tester.pumpAndSettle();
+      // The chosen location's server refuses the account: the test fails.
+      final api = FakeApi()
+        ..location = 'JP'
+        ..online = false
+        ..testErrorCode = Failure.locationRefused;
+      final core = CoreController(
+        () async => api,
+        pollInterval: const Duration(hours: 1),
+      );
+      await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
+      core.start();
+      await tester.pumpAndSettle();
 
-    expect(
-      find.text(
-        "This country isn't open to your account. Choose another country.",
-      ),
-      findsOneWidget,
-    );
-    await tester.tap(find.text('Use the recommended location'));
-    await tester.pumpAndSettle();
-    expect(api.location, '');
+      expect(
+        find.text(
+          "This country isn't open to your account. Choose another country.",
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Use the recommended location'));
+      await tester.pumpAndSettle();
+      expect(api.location, '');
 
-    // A connect given up for the same reason offers it too.
-    api
-      ..on = false
-      ..online = true
-      ..location = 'JP'
-      ..connectFailure = Failure.locationRefused;
-    await core.refresh();
-    await tester.pumpAndSettle();
-    expect(
-      find.text(
-        "This country isn't open to your account. Choose another country.",
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Use the recommended location'), findsOneWidget);
+      // A connect given up for the same reason offers it too.
+      api
+        ..on = false
+        ..online = true
+        ..location = 'JP'
+        ..connectFailure = Failure.locationRefused;
+      await core.refresh();
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          "This country isn't open to your account. Choose another country.",
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Use the recommended location'), findsOneWidget);
 
-    // Other failures do not.
-    api.connectFailure = Failure.unreachable;
-    await core.refresh();
-    await tester.pumpAndSettle();
-    expect(find.text('Use the recommended location'), findsNothing);
+      // Other failures do not.
+      api.connectFailure = Failure.unreachable;
+      await core.refresh();
+      await tester.pumpAndSettle();
+      expect(find.text('Use the recommended location'), findsNothing);
 
-    await tester.pumpWidget(const SizedBox());
-    core.dispose();
-  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+      await tester.pumpWidget(const SizedBox());
+      core.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.windows),
+  );
 
-  testWidgets('warns when the public IP is in another country', (tester) async {
-    stillMotion(tester);
-    tester.view.physicalSize = const Size(1200, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'warns when the public IP is in another country',
+    (tester) async {
+      stillMotion(tester);
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    final api = FakeApi()
-      ..location = 'GB'
-      ..exitMismatch = {
-        'chosen_country_code': 'GB',
-        'chosen_country_name': 'United Kingdom',
-        'exit_country_code': 'DE',
-      };
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
-    core.start();
-    await tester.pumpAndSettle();
+      final api = FakeApi()
+        ..location = 'GB'
+        ..exitMismatch = {
+          'chosen_country_code': 'GB',
+          'chosen_country_name': 'United Kingdom',
+          'exit_country_code': 'DE',
+        };
+      final core = CoreController(
+        () async => api,
+        pollInterval: const Duration(hours: 1),
+      );
+      await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
+      core.start();
+      await tester.pumpAndSettle();
 
-    // A soft warning: still connected.
-    expect(find.text('Connected'), findsOneWidget);
-    expect(
-      find.text('You chose United Kingdom, but your IP is in Germany.'),
-      findsOneWidget,
-    );
+      // A soft warning: still connected.
+      expect(find.text('Connected'), findsOneWidget);
+      expect(
+        find.text('You chose United Kingdom, but your IP is in Germany.'),
+        findsOneWidget,
+      );
 
-    // Never for the recommended location or the fastest one.
-    for (final selection in ['', 'fastest']) {
-      api.location = selection;
+      // Never for the recommended location or the fastest one.
+      for (final selection in ['', 'fastest']) {
+        api.location = selection;
+        await core.refresh();
+        await tester.pumpAndSettle();
+        expect(find.textContaining('but your IP is in'), findsNothing);
+      }
+
+      // Nor without a mismatch.
+      api
+        ..location = 'GB'
+        ..exitMismatch = null;
       await core.refresh();
       await tester.pumpAndSettle();
       expect(find.textContaining('but your IP is in'), findsNothing);
-    }
 
-    // Nor without a mismatch.
-    api
-      ..location = 'GB'
-      ..exitMismatch = null;
-    await core.refresh();
-    await tester.pumpAndSettle();
-    expect(find.textContaining('but your IP is in'), findsNothing);
-
-    await tester.pumpWidget(const SizedBox());
-    core.dispose();
-  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+      await tester.pumpWidget(const SizedBox());
+      core.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.windows),
+  );
 
   testWidgets('opens settings sections and the About tab', (tester) async {
     stillMotion(tester);
@@ -1476,120 +1242,126 @@ void main() {
     core.dispose();
   });
 
-  testWidgets('a nearly used account suggests another one, for a minute', (
-    tester,
-  ) async {
-    stillMotion(tester);
-    tester.view.physicalSize = const Size(1200, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'a nearly used account suggests another one, for a minute',
+    (tester) async {
+      stillMotion(tester);
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    // 3 GB left, and the other account needs signing in: nobody takes over.
-    final api = FakeApi();
-    api.accountsJson.first['usage'] = {
-      'limit_bytes': 50 << 30,
-      'remaining_bytes': 3 << 30,
-    };
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    final settings = AppSettings();
-    await tester.pumpWidget(VpnApp(core: core, settings: settings));
-    core.start();
-    await tester.pumpAndSettle();
-    await core.runTest();
-    await tester.pumpAndSettle();
+      // 3 GB left, and the other account needs signing in: nobody takes over.
+      final api = FakeApi();
+      api.accountsJson.first['usage'] = {
+        'limit_bytes': 50 << 30,
+        'remaining_bytes': 3 << 30,
+      };
+      final core = CoreController(
+        () async => api,
+        pollInterval: const Duration(hours: 1),
+      );
+      final settings = AppSettings();
+      await tester.pumpWidget(VpnApp(core: core, settings: settings));
+      core.start();
+      await tester.pumpAndSettle();
+      await core.runTest();
+      await tester.pumpAndSettle();
 
-    final notice = find.textContaining('running out of data');
-    expect(notice, findsOneWidget);
-    expect(find.textContaining('3 GB'), findsOneWidget);
-    expect(find.textContaining('50 GB'), findsOneWidget);
+      final notice = find.textContaining('running out of data');
+      expect(notice, findsOneWidget);
+      expect(find.textContaining('3 GB'), findsOneWidget);
+      expect(find.textContaining('50 GB'), findsOneWidget);
 
-    // Gone after a minute.
-    await tester.pump(const Duration(seconds: 61));
-    await tester.pumpAndSettle();
-    expect(notice, findsNothing);
+      // Gone after a minute.
+      await tester.pump(const Duration(seconds: 61));
+      await tester.pumpAndSettle();
+      expect(notice, findsNothing);
 
-    await tester.pumpWidget(const SizedBox());
-    core.dispose();
-  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+      await tester.pumpWidget(const SizedBox());
+      core.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.windows),
+  );
 
-  testWidgets('connecting without an account opens the accounts page', (
-    tester,
-  ) async {
-    stillMotion(tester);
-    tester.view.physicalSize = const Size(1200, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'connecting without an account opens the accounts page',
+    (tester) async {
+      stillMotion(tester);
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    final api = FakeApi()..hasAccounts = false;
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
-    core.start();
-    await tester.pumpAndSettle();
+      final api = FakeApi()..hasAccounts = false;
+      final core = CoreController(
+        () async => api,
+        pollInterval: const Duration(hours: 1),
+      );
+      await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
+      core.start();
+      await tester.pumpAndSettle();
 
-    // Waiting for an account counts as on: the button would disconnect.
-    await tester.tap(find.byTooltip('Click to disconnect'));
-    await tester.pumpAndSettle();
-    // The page that explains accounts, not the sign-in form.
-    expect(find.byType(Dialog), findsNothing);
-    expect(find.text('No accounts yet'), findsOneWidget);
-    expect(find.text('Add account'), findsWidgets);
+      // Waiting for an account counts as on: the button would disconnect.
+      await tester.tap(find.byTooltip('Click to disconnect'));
+      await tester.pumpAndSettle();
+      // The page that explains accounts, not the sign-in form.
+      expect(find.byType(Dialog), findsNothing);
+      expect(find.text('No accounts yet'), findsOneWidget);
+      expect(find.text('Add account'), findsWidgets);
 
-    await tester.pumpWidget(const SizedBox());
-    core.dispose();
-  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+      await tester.pumpWidget(const SizedBox());
+      core.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.windows),
+  );
 
-  testWidgets('the computer says connecting until a test passes', (
-    tester,
-  ) async {
-    stillMotion(tester);
-    tester.view.physicalSize = const Size(1200, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'the computer says connecting until a test passes',
+    (tester) async {
+      stillMotion(tester);
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    final api = FakeApi()
-      ..online = false
-      ..recommended = true;
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    final settings = AppSettings();
-    await tester.pumpWidget(VpnApp(core: core, settings: settings));
-    core.start();
-    await tester.pumpAndSettle();
+      final api = FakeApi()
+        ..online = false
+        ..recommended = true;
+      final core = CoreController(
+        () async => api,
+        pollInterval: const Duration(hours: 1),
+      );
+      final settings = AppSettings();
+      await tester.pumpWidget(VpnApp(core: core, settings: settings));
+      core.start();
+      await tester.pumpAndSettle();
 
-    // The system proxy is set, but no test has passed.
-    expect(find.text('Connecting…'), findsOneWidget);
-    expect(find.textContaining("Couldn't connect"), findsOneWidget);
-    // The proxy service still runs for apps set up by hand.
-    // The proxy's address shows when the mouse is over Proxy.
-    expect(
-      find.byTooltip('Proxy service active · 127.0.0.1:10810'),
-      findsOneWidget,
-    );
+      // The system proxy is set, but no test has passed.
+      expect(find.text('Connecting…'), findsOneWidget);
+      expect(find.textContaining("Couldn't connect"), findsOneWidget);
+      // The proxy service still runs for apps set up by hand.
+      // The proxy's address shows when the mouse is over Proxy.
+      expect(
+        find.byTooltip('Proxy service active · 127.0.0.1:10810'),
+        findsOneWidget,
+      );
 
-    api.online = true;
-    await core.runTest();
-    await tester.pumpAndSettle();
-    expect(find.text('Connected'), findsOneWidget);
+      api.online = true;
+      await core.runTest();
+      await tester.pumpAndSettle();
+      expect(find.text('Connected'), findsOneWidget);
 
-    // The public IP shows only when asked for (Settings, Advanced); the
-    // exit's country shows either way.
-    expect(find.text('Belgium'), findsWidgets);
-    expect(find.textContaining('192.0.2.7'), findsNothing);
-    settings.update(showPublicIp: true);
-    await tester.pumpAndSettle();
-    expect(find.textContaining('192.0.2.7'), findsOneWidget);
+      // The public IP shows only when asked for (Settings, Advanced); the
+      // exit's country shows either way.
+      expect(find.text('Belgium'), findsWidgets);
+      expect(find.textContaining('192.0.2.7'), findsNothing);
+      settings.update(showPublicIp: true);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('192.0.2.7'), findsOneWidget);
 
-    await tester.pumpWidget(const SizedBox());
-    core.dispose();
-  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+      await tester.pumpWidget(const SizedBox());
+      core.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.windows),
+  );
 
   testWidgets(
     'another program taking the system proxy is shown, and taken back',
@@ -1637,49 +1409,53 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.windows),
   );
 
-  testWidgets('the smallest windows keep everything inside', (tester) async {
-    stillMotion(tester);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'the smallest windows keep everything inside',
+    (tester) async {
+      stillMotion(tester);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    // The computer layout at the window's smallest inside: the side menu's
-    // traffic stays in view, and its pages scroll above it.
-    tester.view.physicalSize = const Size(800, 441);
-    final api = FakeApi();
-    final core = CoreController(
-      () async => api,
-      pollInterval: const Duration(hours: 1),
-    );
-    await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
-    core.start();
-    await tester.pumpAndSettle();
-    expect(find.byType(NavigationRail), findsOneWidget);
-    expect(
-      tester.getBottomLeft(find.text('Total traffic')).dy,
-      lessThanOrEqualTo(441),
-    );
+      // The computer layout at the window's smallest inside: the side menu's
+      // traffic stays in view, and its pages scroll above it.
+      tester.view.physicalSize = const Size(800, 441);
+      final api = FakeApi();
+      final core = CoreController(
+        () async => api,
+        pollInterval: const Duration(hours: 1),
+      );
+      await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
+      core.start();
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(
+        tester.getBottomLeft(find.text('Total traffic')).dy,
+        lessThanOrEqualTo(441),
+      );
 
-    // Just under the computer layout's width, the phone's, with a problem
-    // box and a notice: nothing runs past the bottom.
-    api
-      ..systemProxySupported = false
-      ..online = false
-      ..location = 'JP'
-      ..testErrorCode = Failure.locationRefused;
-    tester.view.physicalSize = const Size(624, 441);
-    await core.refresh();
-    await tester.pumpAndSettle();
-    expect(find.byType(NavigationRail), findsNothing);
-    expect(
-      find.text(
-        "This country isn't open to your account. Choose another country.",
-      ),
-      findsOneWidget,
-    );
+      // Just under the computer layout's width, the phone's, with a problem
+      // box and a notice: nothing runs past the bottom.
+      api
+        ..systemProxySupported = false
+        ..online = false
+        ..location = 'JP'
+        ..testErrorCode = Failure.locationRefused;
+      tester.view.physicalSize = const Size(624, 441);
+      await core.refresh();
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationRail), findsNothing);
+      expect(
+        find.text(
+          "This country isn't open to your account. Choose another country.",
+        ),
+        findsOneWidget,
+      );
 
-    await tester.pumpWidget(const SizedBox());
-    core.dispose();
-  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+      await tester.pumpWidget(const SizedBox());
+      core.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.windows),
+  );
 
   group('updates', () {
     const page = 'https://github.com/o/r/releases/tag/v9.9.9';
@@ -1948,383 +1724,407 @@ void main() {
       core.dispose();
     }
 
-    testWidgets('is offered only where the core runs it', (tester) async {
-      stillMotion(tester);
-      tester.view.physicalSize = const Size(1200, 900);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-      final core = CoreController(
-        () async => FakeApi(),
-        pollInterval: const Duration(hours: 1),
-      );
-      await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
-      core.start();
-      await tester.pumpAndSettle();
-      expect(find.text('System proxy'), findsWidgets);
-      expect(find.text('TUN'), findsNothing);
-      await done(tester, core);
-    }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+    testWidgets(
+      'is offered only where the core runs it',
+      (tester) async {
+        stillMotion(tester);
+        tester.view.physicalSize = const Size(1200, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final core = CoreController(
+          () async => FakeApi(),
+          pollInterval: const Duration(hours: 1),
+        );
+        await tester.pumpWidget(VpnApp(core: core, settings: AppSettings()));
+        core.start();
+        await tester.pumpAndSettle();
+        expect(find.text('System proxy'), findsWidgets);
+        expect(find.text('TUN'), findsNothing);
+        await done(tester, core);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.windows),
+    );
 
-    testWidgets('installs its service on the first choice, then switches', (
-      tester,
-    ) async {
-      final (api, core, service) = await pumpTun(tester);
-      // The modes are one track (_ModeSwitch), not segmented buttons.
-      expect(find.byType(SegmentedButton<String>), findsNothing);
-      await tester.tap(find.text('TUN'));
-      await tester.pumpAndSettle();
-      expect(service.installs, 1);
-      // The reason macOS' prompt shows, in the app's language.
-      expect(
-        service.prompt,
-        'Firefox VPN wants to install the service for TUN mode.',
-      );
-      expect(api.mode, 'tun');
-      api.tun = {'state': 'on', 'installed': true};
-      await core.refresh();
-      await tester.pumpAndSettle();
-      expect(
-        find.text('All Windows traffic goes through the VPN.'),
-        findsOneWidget,
-      );
-      // Installed: choosing it again asks for nothing.
-      await tester.tap(find.text('Proxy').first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('TUN'));
-      await tester.pumpAndSettle();
-      expect(service.installs, 1);
-      expect(api.mode, 'tun');
-      await done(tester, core);
-    }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+    testWidgets(
+      'installs its service on the first choice, then switches',
+      (tester) async {
+        final (api, core, service) = await pumpTun(tester);
+        // The modes are one track (_ModeSwitch), not segmented buttons.
+        expect(find.byType(SegmentedButton<String>), findsNothing);
+        await tester.tap(find.text('TUN'));
+        await tester.pumpAndSettle();
+        expect(service.installs, 1);
+        // The reason macOS' prompt shows, in the app's language.
+        expect(
+          service.prompt,
+          'Firefox VPN wants to install the service for TUN mode.',
+        );
+        expect(api.mode, 'tun');
+        api.tun = {'state': 'on', 'installed': true};
+        await core.refresh();
+        await tester.pumpAndSettle();
+        expect(
+          find.text('All Windows traffic goes through the VPN.'),
+          findsOneWidget,
+        );
+        // Installed: choosing it again asks for nothing.
+        await tester.tap(find.text('Proxy').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('TUN'));
+        await tester.pumpAndSettle();
+        expect(service.installs, 1);
+        expect(api.mode, 'tun');
+        await done(tester, core);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.windows),
+    );
 
     // A Linux desktop without a system proxy setting (not GNOME or KDE)
     // still has TUN mode.
-    testWidgets('is offered without a system proxy setting', (tester) async {
-      final (api, core, service) = await pumpTun(tester, systemProxy: false);
-      expect(find.text('System proxy'), findsNothing);
-      await tester.tap(find.text('TUN'));
-      await tester.pumpAndSettle();
-      expect(service.installs, 1);
-      expect(api.mode, 'tun');
-      api.tun = {'state': 'on', 'installed': true};
-      await core.refresh();
-      await tester.pumpAndSettle();
-      expect(
-        find.text('All Linux traffic goes through the VPN.'),
-        findsOneWidget,
-      );
-      // The settings have the same choice.
-      await tester.tap(find.text('Settings'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Connection'));
-      await tester.pumpAndSettle();
-      expect(find.text('Connection mode'), findsOneWidget);
-      await done(tester, core);
-    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
-
-    testWidgets('the settings remove the service', (tester) async {
-      final (api, core, service) = await pumpTun(
-        tester,
-        tun: {'state': 'off', 'installed': true},
-      );
-      await tester.tap(find.text('Settings'));
-      await tester.pumpAndSettle();
-      // Out of the way: in the Advanced settings, not with TUN mode's.
-      expect(find.text('TUN settings'), findsNothing);
-      await tester.tap(find.text('Advanced'));
-      await tester.pumpAndSettle();
-      expect(find.text('Remove the TUN service'), findsOneWidget);
-      final remove = find.widgetWithText(OutlinedButton, 'Remove');
-      await tester.ensureVisible(remove);
-      await tester.pumpAndSettle();
-      // Asked first: Cancel keeps it.
-      await tester.tap(remove);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(service.removals, 0);
-      await tester.tap(remove);
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
-      await tester.pumpAndSettle();
-      expect(service.removals, 1);
-      expect(
-        service.prompt,
-        'Firefox VPN wants to remove the service for TUN mode.',
-      );
-      expect(find.text('The TUN service was removed.'), findsOneWidget);
-      expect(api.tun?['installed'], isFalse);
-      await done(tester, core);
-    }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
-
-    testWidgets('the TUN settings keep the programs that skip the VPN', (
-      tester,
-    ) async {
-      final (api, core, _) = await pumpTun(
-        tester,
-        mode: 'tun',
-        tun: {'state': 'on', 'installed': true, 'programs_supported': true},
-      );
-      api.config['tun'] = {
-        'programs': [
-          {'name': 'steam.exe'},
-        ],
-      };
-      final oldPick = pickProgramFile;
-      addTearDown(() => pickProgramFile = oldPick);
-      String? pickedTitle;
-      pickProgramFile = (title, label) async {
-        pickedTitle = '$title / $label';
-        return r'C:\Games\Spacewar\Game.exe';
-      };
-      List<Object?> programs() =>
-          (api.config['tun'] as Map)['programs'] as List<Object?>;
-
-      await tester.tap(find.text('Settings'));
-      await tester.pumpAndSettle();
-      // After Routing.
-      final routing = tester.getTopLeft(find.text('Routing')).dy;
-      expect(
-        tester.getTopLeft(find.text('TUN settings')).dy,
-        greaterThan(routing),
-      );
-      await tester.tap(find.text('TUN settings'));
-      await tester.pumpAndSettle();
-      expect(find.text('Notice when UDP is blocked'), findsOneWidget);
-      // Removing the service is in the Advanced settings, not here.
-      expect(find.text('Remove the TUN service'), findsNothing);
-      // A program's name reads left to right, from the left, in every
-      // language.
-      final steam = find.text('steam.exe');
-      expect(steam, findsOneWidget);
-      expect(tester.widget<Text>(steam).textDirection, TextDirection.ltr);
-      expect(find.text('All traffic'), findsOneWidget);
-
-      // Only its UDP, from the row's choice.
-      await tester.tap(find.text('All traffic'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text(
-          'Only its UDP connects directly; the rest goes through the VPN.',
-        ),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('UDP only'));
-      await tester.pumpAndSettle();
-      expect(programs(), [
-        {'name': 'steam.exe', 'udp_only': true},
-      ]);
-
-      // The three ways to add one.
-      Future<void> add(String way) async {
-        await tester.tap(find.text('Add program'));
+    testWidgets(
+      'is offered without a system proxy setting',
+      (tester) async {
+        final (api, core, service) = await pumpTun(tester, systemProxy: false);
+        expect(find.text('System proxy'), findsNothing);
+        await tester.tap(find.text('TUN'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text(way));
-        await tester.pumpAndSettle();
-      }
-
-      // From the open dialog, by its file name, with its path to see.
-      await add('Choose a file…');
-      expect(pickedTitle, 'Add program / Programs');
-      expect(programs(), [
-        {'name': 'steam.exe', 'udp_only': true},
-        {'name': 'Game.exe', 'path': r'C:\Games\Spacewar\Game.exe'},
-      ]);
-      expect(find.text(r'C:\Games\Spacewar\Game.exe'), findsOneWidget);
-      // The same one again is not added twice.
-      await add('Choose a file…');
-      expect(programs(), hasLength(2));
-
-      // From the running programs, found with the search; the ones in the
-      // list are marked and cannot be picked.
-      api.running = [
-        {'name': 'steam.exe', 'path': r'C:\Games\Steam\steam.exe'},
-        {
-          'name': 'Telegram.exe',
-          'path': r'C:\Users\u\AppData\Roaming\Telegram Desktop\Telegram.exe',
-        },
-        {'name': 'curl.exe', 'path': r'C:\Tools\curl.exe'},
-      ];
-      await add('From running programs');
-      expect(find.text('curl.exe'), findsOneWidget);
-      await tester.enterText(find.byType(TextField).last, 'tele');
-      await tester.pumpAndSettle();
-      expect(find.text('curl.exe'), findsNothing);
-      await tester.tap(find.text('Telegram.exe'));
-      await tester.pumpAndSettle();
-      expect(programs().last, {
-        'name': 'Telegram.exe',
-        'path': r'C:\Users\u\AppData\Roaming\Telegram Desktop\Telegram.exe',
-      });
-
-      // By a name with *.
-      await add('Type a name…');
-      expect(
-        find.text(
-          "A program's file name, such as steam.exe; * stands for any text (steam* is every Steam program).",
-        ),
-        findsOneWidget,
-      );
-      await tester.enterText(find.byType(TextField).last, ' steam* ');
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Add program'));
-      await tester.pumpAndSettle();
-      expect(programs().last, {'name': 'steam*'});
-      expect(programs(), hasLength(4));
-
-      for (final _ in [0, 1, 2, 3]) {
-        await tester.tap(find.byTooltip('Remove').first);
-        await tester.pumpAndSettle();
-      }
-      expect(programs(), isEmpty);
-      // None running.
-      api.running = [];
-      await add('From running programs');
-      expect(find.text('No other programs are running.'), findsOneWidget);
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(find.text('No programs yet.'), findsOneWidget);
-      await done(tester, core);
-    }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
-
-    testWidgets('a refused call offers to send it directly', (tester) async {
-      final settings = AppSettings();
-      final (api, core, _) = await pumpTun(
-        tester,
-        mode: 'tun',
-        settings: settings,
-        tun: {
-          'state': 'on',
-          'installed': true,
-          'programs_supported': true,
-          'refused_udp': 'Telegram.exe',
-          'refused_udp_path': r'C:\Apps\Telegram.exe',
-        },
-      );
-      final card = find.textContaining(
-        "tried to make a call or play online, but in TUN mode that traffic (UDP) can't go through the VPN.",
-      );
-      expect(card, findsOneWidget);
-      expect(
-        tester.widget<Text>(card).data,
-        startsWith('\u2066Telegram\u2069 tried'),
-      );
-      await tester.tap(find.text('Send its UDP directly'));
-      await tester.pumpAndSettle();
-      expect((api.config['tun'] as Map)['programs'], [
-        {
-          'name': 'Telegram.exe',
-          'udp_only': true,
-          'path': r'C:\Apps\Telegram.exe',
-        },
-      ]);
-      expect(
-        find.textContaining('its UDP now connects directly.'),
-        findsOneWidget,
-      );
-
-      // Another program, and the notice turned off.
-      api.tun = {...api.tun!, 'refused_udp': 'Discord.exe'};
-      await core.refresh();
-      await tester.pumpAndSettle();
-      expect(card, findsOneWidget);
-      await tester.tap(find.text("Don't show again"));
-      await tester.pumpAndSettle();
-      expect(settings.udpNotice, isFalse);
-      expect(card, findsNothing);
-
-      // Nothing to offer while the TUN is off, or where programs cannot
-      // skip it (macOS).
-      settings.update(udpNotice: true);
-      api.tun = {...api.tun!, 'state': 'starting'};
-      await core.refresh();
-      await tester.pumpAndSettle();
-      expect(card, findsNothing);
-      api.tun = {...api.tun!, 'state': 'on', 'programs_supported': false};
-      await core.refresh();
-      await tester.pumpAndSettle();
-      expect(card, findsNothing);
-      await done(tester, core);
-    }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
-
-    testWidgets('keeps the mode when Windows was not given permission', (
-      tester,
-    ) async {
-      final (api, core, service) = await pumpTun(
-        tester,
-        result: const TunServiceCancelled(),
-      );
-      await tester.tap(find.text('TUN'));
-      await tester.pumpAndSettle();
-      expect(service.installs, 1);
-      expect(api.mode, 'clear');
-      expect(
-        find.text(
-          "TUN mode needs administrator permission once. It wasn't given, so the mode didn't change.",
-        ),
-        findsOneWidget,
-      );
-      await done(tester, core);
-    }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
-
-    testWidgets('says why it does not run, with Install where that helps', (
-      tester,
-    ) async {
-      final (api, core, service) = await pumpTun(
-        tester,
-        mode: 'tun',
-        tun: {'state': 'error', 'code': 'not_running', 'installed': true},
-      );
-      expect(
-        find.text("The TUN service isn't running. Trying again…"),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Install again'));
-      await tester.pumpAndSettle();
-      expect(service.installs, 1);
-
-      for (final (code, text, button) in [
-        (
-          'outdated',
-          'The TUN service is older than this app. Install it again to use TUN mode.',
-          'Install again',
-        ),
-        ('missing', "The TUN service isn't installed.", 'Install'),
-        (
-          'app_outdated',
-          'The TUN service is newer than this app. Update the app to use TUN mode.',
-          null,
-        ),
-        ('busy', 'Another copy of Firefox VPN is using TUN mode.', null),
-        ('lost', 'TUN mode stopped unexpectedly. Trying again…', null),
-        ('failed', "TUN mode couldn't start. Trying again…", null),
-      ]) {
-        api.tun = {'state': 'error', 'code': code, 'installed': true};
+        expect(service.installs, 1);
+        expect(api.mode, 'tun');
+        api.tun = {'state': 'on', 'installed': true};
         await core.refresh();
         await tester.pumpAndSettle();
-        expect(find.text(text), findsOneWidget, reason: code);
         expect(
-          find.text('Install again'),
-          button == 'Install again' ? findsOneWidget : findsNothing,
-          reason: code,
+          find.text('All Linux traffic goes through the VPN.'),
+          findsOneWidget,
+        );
+        // The settings have the same choice.
+        await tester.tap(find.text('Settings'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Connection'));
+        await tester.pumpAndSettle();
+        expect(find.text('Connection mode'), findsOneWidget);
+        await done(tester, core);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.linux),
+    );
+
+    testWidgets(
+      'the settings remove the service',
+      (tester) async {
+        final (api, core, service) = await pumpTun(
+          tester,
+          tun: {'state': 'off', 'installed': true},
+        );
+        await tester.tap(find.text('Settings'));
+        await tester.pumpAndSettle();
+        // Out of the way: in the Advanced settings, not with TUN mode's.
+        expect(find.text('TUN settings'), findsNothing);
+        await tester.tap(find.text('Advanced'));
+        await tester.pumpAndSettle();
+        expect(find.text('Remove the TUN service'), findsOneWidget);
+        final remove = find.widgetWithText(OutlinedButton, 'Remove');
+        await tester.ensureVisible(remove);
+        await tester.pumpAndSettle();
+        // Asked first: Cancel keeps it.
+        await tester.tap(remove);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        expect(service.removals, 0);
+        await tester.tap(remove);
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+        await tester.pumpAndSettle();
+        expect(service.removals, 1);
+        expect(
+          service.prompt,
+          'Firefox VPN wants to remove the service for TUN mode.',
+        );
+        expect(find.text('The TUN service was removed.'), findsOneWidget);
+        expect(api.tun?['installed'], isFalse);
+        await done(tester, core);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.windows),
+    );
+
+    testWidgets(
+      'the TUN settings keep the programs that skip the VPN',
+      (tester) async {
+        final (api, core, _) = await pumpTun(
+          tester,
+          mode: 'tun',
+          tun: {'state': 'on', 'installed': true, 'programs_supported': true},
+        );
+        api.config['tun'] = {
+          'programs': [
+            {'name': 'steam.exe'},
+          ],
+        };
+        final oldPick = pickProgramFile;
+        addTearDown(() => pickProgramFile = oldPick);
+        String? pickedTitle;
+        pickProgramFile = (title, label) async {
+          pickedTitle = '$title / $label';
+          return r'C:\Games\Spacewar\Game.exe';
+        };
+        List<Object?> programs() =>
+            (api.config['tun'] as Map)['programs'] as List<Object?>;
+
+        await tester.tap(find.text('Settings'));
+        await tester.pumpAndSettle();
+        // After Routing.
+        final routing = tester.getTopLeft(find.text('Routing')).dy;
+        expect(
+          tester.getTopLeft(find.text('TUN settings')).dy,
+          greaterThan(routing),
+        );
+        await tester.tap(find.text('TUN settings'));
+        await tester.pumpAndSettle();
+        expect(find.text('Notice when UDP is blocked'), findsOneWidget);
+        // Removing the service is in the Advanced settings, not here.
+        expect(find.text('Remove the TUN service'), findsNothing);
+        // A program's name reads left to right, from the left, in every
+        // language.
+        final steam = find.text('steam.exe');
+        expect(steam, findsOneWidget);
+        expect(tester.widget<Text>(steam).textDirection, TextDirection.ltr);
+        expect(find.text('All traffic'), findsOneWidget);
+
+        // Only its UDP, from the row's choice.
+        await tester.tap(find.text('All traffic'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            'Only its UDP connects directly; the rest goes through the VPN.',
+          ),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('UDP only'));
+        await tester.pumpAndSettle();
+        expect(programs(), [
+          {'name': 'steam.exe', 'udp_only': true},
+        ]);
+
+        // The three ways to add one.
+        Future<void> add(String way) async {
+          await tester.tap(find.text('Add program'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text(way));
+          await tester.pumpAndSettle();
+        }
+
+        // From the open dialog, by its file name, with its path to see.
+        await add('Choose a file…');
+        expect(pickedTitle, 'Add program / Programs');
+        expect(programs(), [
+          {'name': 'steam.exe', 'udp_only': true},
+          {'name': 'Game.exe', 'path': r'C:\Games\Spacewar\Game.exe'},
+        ]);
+        expect(find.text(r'C:\Games\Spacewar\Game.exe'), findsOneWidget);
+        // The same one again is not added twice.
+        await add('Choose a file…');
+        expect(programs(), hasLength(2));
+
+        // From the running programs, found with the search; the ones in the
+        // list are marked and cannot be picked.
+        api.running = [
+          {'name': 'steam.exe', 'path': r'C:\Games\Steam\steam.exe'},
+          {
+            'name': 'Telegram.exe',
+            'path': r'C:\Users\u\AppData\Roaming\Telegram Desktop\Telegram.exe',
+          },
+          {'name': 'curl.exe', 'path': r'C:\Tools\curl.exe'},
+        ];
+        await add('From running programs');
+        expect(find.text('curl.exe'), findsOneWidget);
+        await tester.enterText(find.byType(TextField).last, 'tele');
+        await tester.pumpAndSettle();
+        expect(find.text('curl.exe'), findsNothing);
+        await tester.tap(find.text('Telegram.exe'));
+        await tester.pumpAndSettle();
+        expect(programs().last, {
+          'name': 'Telegram.exe',
+          'path': r'C:\Users\u\AppData\Roaming\Telegram Desktop\Telegram.exe',
+        });
+
+        // By a name with *.
+        await add('Type a name…');
+        expect(
+          find.text(
+            "A program's file name, such as steam.exe; * stands for any text (steam* is every Steam program).",
+          ),
+          findsOneWidget,
+        );
+        await tester.enterText(find.byType(TextField).last, ' steam* ');
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, 'Add program'));
+        await tester.pumpAndSettle();
+        expect(programs().last, {'name': 'steam*'});
+        expect(programs(), hasLength(4));
+
+        for (final _ in [0, 1, 2, 3]) {
+          await tester.tap(find.byTooltip('Remove').first);
+          await tester.pumpAndSettle();
+        }
+        expect(programs(), isEmpty);
+        // None running.
+        api.running = [];
+        await add('From running programs');
+        expect(find.text('No other programs are running.'), findsOneWidget);
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        expect(find.text('No programs yet.'), findsOneWidget);
+        await done(tester, core);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.windows),
+    );
+
+    testWidgets(
+      'a refused call offers to send it directly',
+      (tester) async {
+        final settings = AppSettings();
+        final (api, core, _) = await pumpTun(
+          tester,
+          mode: 'tun',
+          settings: settings,
+          tun: {
+            'state': 'on',
+            'installed': true,
+            'programs_supported': true,
+            'refused_udp': 'Telegram.exe',
+            'refused_udp_path': r'C:\Apps\Telegram.exe',
+          },
+        );
+        final card = find.textContaining(
+          "tried to make a call or play online, but in TUN mode that traffic (UDP) can't go through the VPN.",
+        );
+        expect(card, findsOneWidget);
+        expect(
+          tester.widget<Text>(card).data,
+          startsWith('\u2066Telegram\u2069 tried'),
+        );
+        await tester.tap(find.text('Send its UDP directly'));
+        await tester.pumpAndSettle();
+        expect((api.config['tun'] as Map)['programs'], [
+          {
+            'name': 'Telegram.exe',
+            'udp_only': true,
+            'path': r'C:\Apps\Telegram.exe',
+          },
+        ]);
+        expect(
+          find.textContaining('its UDP now connects directly.'),
+          findsOneWidget,
+        );
+
+        // Another program, and the notice turned off.
+        api.tun = {...api.tun!, 'refused_udp': 'Discord.exe'};
+        await core.refresh();
+        await tester.pumpAndSettle();
+        expect(card, findsOneWidget);
+        await tester.tap(find.text("Don't show again"));
+        await tester.pumpAndSettle();
+        expect(settings.udpNotice, isFalse);
+        expect(card, findsNothing);
+
+        // Nothing to offer while the TUN is off, or where programs cannot
+        // skip it (macOS).
+        settings.update(udpNotice: true);
+        api.tun = {...api.tun!, 'state': 'starting'};
+        await core.refresh();
+        await tester.pumpAndSettle();
+        expect(card, findsNothing);
+        api.tun = {...api.tun!, 'state': 'on', 'programs_supported': false};
+        await core.refresh();
+        await tester.pumpAndSettle();
+        expect(card, findsNothing);
+        await done(tester, core);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.windows),
+    );
+
+    testWidgets(
+      'keeps the mode when Windows was not given permission',
+      (tester) async {
+        final (api, core, service) = await pumpTun(
+          tester,
+          result: const TunServiceCancelled(),
+        );
+        await tester.tap(find.text('TUN'));
+        await tester.pumpAndSettle();
+        expect(service.installs, 1);
+        expect(api.mode, 'clear');
+        expect(
+          find.text(
+            "TUN mode needs administrator permission once. It wasn't given, so the mode didn't change.",
+          ),
+          findsOneWidget,
+        );
+        await done(tester, core);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.windows),
+    );
+
+    testWidgets(
+      'says why it does not run, with Install where that helps',
+      (tester) async {
+        final (api, core, service) = await pumpTun(
+          tester,
+          mode: 'tun',
+          tun: {'state': 'error', 'code': 'not_running', 'installed': true},
         );
         expect(
-          find.text('Install'),
-          button == 'Install' ? findsOneWidget : findsNothing,
-          reason: code,
+          find.text("The TUN service isn't running. Trying again…"),
+          findsOneWidget,
         );
-      }
-      api.tun = {'state': 'starting', 'installed': true};
-      await core.refresh();
-      await tester.pumpAndSettle();
-      expect(find.text('Starting TUN mode…'), findsOneWidget);
-      // Nothing to say while the proxy is off.
-      api.on = false;
-      await core.refresh();
-      await tester.pumpAndSettle();
-      expect(find.text('Starting TUN mode…'), findsNothing);
-      await done(tester, core);
-    }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+        await tester.tap(find.text('Install again'));
+        await tester.pumpAndSettle();
+        expect(service.installs, 1);
+
+        for (final (code, text, button) in [
+          (
+            'outdated',
+            'The TUN service is older than this app. Install it again to use TUN mode.',
+            'Install again',
+          ),
+          ('missing', "The TUN service isn't installed.", 'Install'),
+          (
+            'app_outdated',
+            'The TUN service is newer than this app. Update the app to use TUN mode.',
+            null,
+          ),
+          ('busy', 'Another copy of Firefox VPN is using TUN mode.', null),
+          ('lost', 'TUN mode stopped unexpectedly. Trying again…', null),
+          ('failed', "TUN mode couldn't start. Trying again…", null),
+        ]) {
+          api.tun = {'state': 'error', 'code': code, 'installed': true};
+          await core.refresh();
+          await tester.pumpAndSettle();
+          expect(find.text(text), findsOneWidget, reason: code);
+          expect(
+            find.text('Install again'),
+            button == 'Install again' ? findsOneWidget : findsNothing,
+            reason: code,
+          );
+          expect(
+            find.text('Install'),
+            button == 'Install' ? findsOneWidget : findsNothing,
+            reason: code,
+          );
+        }
+        api.tun = {'state': 'starting', 'installed': true};
+        await core.refresh();
+        await tester.pumpAndSettle();
+        expect(find.text('Starting TUN mode…'), findsOneWidget);
+        // Nothing to say while the proxy is off.
+        api.on = false;
+        await core.refresh();
+        await tester.pumpAndSettle();
+        expect(find.text('Starting TUN mode…'), findsNothing);
+        await done(tester, core);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.windows),
+    );
   });
 
   test('the computer uses the VPN with the system proxy or a running TUN', () {

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../core/core_api.dart';
 import '../core/core_controller.dart';
 import '../core/models.dart';
 import '../l10n/app_localizations.dart';
-import '../platform.dart';
 import 'format.dart';
 import 'signin_dialog.dart';
 import 'widgets.dart';
@@ -105,7 +103,7 @@ class AccountsPage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        const _CreateAccountGuide(),
+        _CreateAccountGuide(core: core),
       ],
     );
   }
@@ -148,9 +146,12 @@ String _allowance(List<Account> list) {
   return formatBytes(limit).replaceAll('.0 ', ' ');
 }
 
-/// Where to make a Firefox Account: Mozilla's site, then Add account here.
+/// How an account arrives here: as a key from the keymaker, pasted in the
+/// sign-in dialog. No email, no Mozilla site.
 class _CreateAccountGuide extends StatelessWidget {
-  const _CreateAccountGuide();
+  const _CreateAccountGuide({required this.core});
+
+  final CoreController core;
 
   @override
   Widget build(BuildContext context) {
@@ -160,16 +161,16 @@ class _CreateAccountGuide extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.help_outline_rounded, color: theme.colorScheme.primary),
+          Icon(Icons.vpn_key_rounded, color: theme.colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l.createAccountTitle, style: theme.textTheme.titleSmall),
+                Text(l.signInModeKey, style: theme.textTheme.titleSmall),
                 const SizedBox(height: 4),
                 Text(
-                  l.createAccountHint,
+                  l.keyIntro,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -179,13 +180,9 @@ class _CreateAccountGuide extends StatelessWidget {
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
-                  onPressed: () => openUrl(firefoxAccountSignUpUrl),
-                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                  // The address reads left to right in every language.
-                  label: Text(
-                    'accounts.firefox.com',
-                    textDirection: TextDirection.ltr,
-                  ),
+                  onPressed: () => showSignInDialog(context, core),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: Text(l.addAccount),
                 ),
               ],
             ),
@@ -417,27 +414,10 @@ class _AccountCard extends StatelessWidget {
     );
   }
 
-  /// Signs in with the stored password; without one, asks for it.
+  /// An account whose token Mozilla stopped accepting: it comes back to
+  /// life with a fresh key, the only sign-in there is.
   Future<void> _signInAgain(BuildContext context) async {
-    final api = core.api;
-    if (api == null) return;
-    try {
-      final started = await api.startSignInAgain(account.id);
-      if (context.mounted) {
-        await showSignInDialog(context, core, started: started);
-      }
-    } on CoreApiException catch (e) {
-      if (!context.mounted) return;
-      if (e.statusCode == 409) {
-        await showSignInDialog(context, core, email: account.email);
-      } else {
-        showError(context, e.message);
-      }
-    } on CoreUnavailable catch (e) {
-      if (context.mounted) {
-        showError(context, describeProblem(AppLocalizations.of(context), e));
-      }
-    }
+    await showSignInDialog(context, core);
   }
 
   Future<void> _remove(BuildContext context) async {

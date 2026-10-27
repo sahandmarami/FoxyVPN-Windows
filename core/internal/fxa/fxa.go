@@ -19,9 +19,10 @@ import (
 )
 
 const (
-	fxaAuthServer   = "https://api.accounts.firefox.com/v1"
-	firefoxClientID = "5882386c6d801776"
-	oauthScope      = "profile https://identity.mozilla.com/apps/vpn"
+	fxaAuthServer    = "https://api.accounts.firefox.com/v1"
+	fxaProfileServer = "https://profile.accounts.firefox.com/v1"
+	firefoxClientID  = "5882386c6d801776"
+	oauthScope       = "profile https://identity.mozilla.com/apps/vpn"
 
 	// maxChallengeAttempts bounds how many times an FxA call re-solves the
 	// Fastly anti-bot challenge; with rotating-exit proxies a solved cookie
